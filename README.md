@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shopify Multi-Store Dashboard
+
+A Next.js dashboard application for managing multiple Shopify stores from a single interface. Connect your stores, import products with all their details, edit them, and sync changes back to Shopify.
+
+## Features
+
+- **Multiple Store Management**: Connect and manage multiple Shopify stores
+- **Product Import**: Import products with title, description, price, variants, tags, images and metafields
+- **Easy Editing**: Edit product details in a user-friendly interface with inline editing and modals
+- **Automatic Sync**: Changes are synced back to the remote store (Shopify) when saved
+- **Secure Authentication**: User authentication with NextAuth.js (credentials/JWT)
+- **Database Storage**: SQLite (development) via Prisma ORM — production can use PostgreSQL or other supported providers
+- **Modern UI**: Beautiful, responsive interface with Tailwind CSS and React Icons
+- **Extensible**: Architecture designed to support other e-commerce platforms in the future
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS (v4)
+- **Database**: SQLite for local development (Prisma). You can swap to PostgreSQL in production.
+- **ORM**: Prisma (v7)
+- **Authentication**: NextAuth.js (Credentials provider + sessions)
+- **API Integration**: Shopify Admin API (via small internal service wrapper)
+- **UI/Icons**: React Icons
+- **Validation**: Zod (used server-side) and optional React Hook Form in some components
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- No database server is required for development (uses SQLite). For production you may choose PostgreSQL and update `DATABASE_URL` accordingly.
+- Shopify store(s) with admin access (to create API access tokens)
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Set up environment variables
+
+Create a `.env` file in the project root (example values):
+
+```env
+# Database - local development uses SQLite file
+DATABASE_URL="file:./dev.db"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="change-this-to-a-secure-random-value"
+
+# (Optional) Shopify credentials for a store used when importing/syncing
+# SHOPIFY_STORE_URL="your-store.myshopify.com"
+# SHOPIFY_ACCESS_TOKEN="shpat_xxx"
+```
+
+Notes:
+- For production with PostgreSQL set `DATABASE_URL` to your PostgreSQL connection string.
+- Generate `NEXTAUTH_SECRET` securely (e.g. `openssl rand -base64 32`).
+
+### 3. Set up the database
+
+```bash
+# Generate Prisma Client
+npx prisma generate
+
+# Run database migrations (creates SQLite file `dev.db` locally)
+npx prisma migrate dev --name init
+```
+
+### 4. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage Guide
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Connect a Store
 
-## Learn More
+1. Go to the `Stores` page in the dashboard
+2. Click `Add Store`
+3. Fill in the form:
+   - **Store Name**: A friendly name for your store
+   - **Platform**: Select `Shopify`
+   - **Store URL**: Your Shopify store admin URL (e.g., `https://yourstore.myshopify.com`)
+   - **Access Token**: Admin API access token with `read_products` and `write_products` permissions
 
-To learn more about Next.js, take a look at the following resources:
+### Get Shopify Access Token
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Log in to your Shopify admin
+2. Go to Settings → Apps and sales channels → Develop apps
+3. Create an app and grant `read_products` and `write_products` scopes
+4. Install the app and copy the Admin API access token
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Import and Edit Products
 
-## Deploy on Vercel
+1. Click `Import Products` on any connected store
+2. Products will be imported with all details (title, description, images, variants, tags, metafields)
+3. Edit products from the `Products` page — edits update the local DB and attempt to sync back to Shopify
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If you need per-variant price control, edit variant prices individually; a product-level price will propagate to variants by default.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/               # API routes (product listing, product update, stores)
+│   ├── auth/              # Authentication pages
+│   └── dashboard/         # Dashboard pages (stores, products, layout)
+├── components/            # Shared React components (store cards, modals)
+├── lib/                   # Utility libraries (Shopify service, prisma client, auth)
+├── prisma/                 # Prisma schema & migrations
+└── types/                 # TypeScript definitions
+```
+
+

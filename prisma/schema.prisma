@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  stores    Store[]
+}
+
+model Store {
+  id          String    @id @default(cuid())
+  name        String
+  platform    Platform  @default(SHOPIFY)
+  storeUrl    String
+  accessToken String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Product {
+  id              String           @id @default(cuid())
+  shopifyId       String?
+  title           String
+  description     String?
+  price           Float
+  compareAtPrice  Float?
+  image           String?
+  storeId         String
+  store           Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variants        ProductVariant[]
+  tags            ProductTag[]
+  metafields      ProductMetafield[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([storeId])
+  @@index([shopifyId])
+}
+
+model ProductVariant {
+  id              String   @id @default(cuid())
+  shopifyId       String?
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title           String
+  price           Float
+  compareAtPrice  Float?
+  sku             String?
+  inventoryQuantity Int?
+  option1         String?
+  option2         String?
+  option3         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model ProductTag {
+  id        String   @id @default(cuid())
+  tag       String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model ProductMetafield {
+  id        String   @id @default(cuid())
+  shopifyId String?
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  namespace String
+  key       String
+  value     String
+  type      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+}
+
+enum Platform {
+  SHOPIFY
+  WOOCOMMERCE
+  MAGENTO
+  CUSTOM
+}
